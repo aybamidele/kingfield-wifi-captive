@@ -251,7 +251,7 @@ def test_form_submit_with_successful_omada_uses_safe_redirect(
     settings.OMADA_ENABLED = True
     settings.ALLOWED_HOSTS = ["testserver", "guest.example.com"]
 
-    def fake_authorize(session):
+    def fake_authorize(session, **kwargs):
         session.auth_status = GuestWifiSession.AuthStatus.AUTHORIZED
         session.authorized_at = timezone.now()
         session.save(update_fields=["auth_status", "authorized_at", "updated_at"])
@@ -286,7 +286,7 @@ def test_form_submit_with_failed_omada_shows_friendly_error(
 ):
     settings.OMADA_ENABLED = True
 
-    def fake_authorize(session):
+    def fake_authorize(session, **kwargs):
         session.auth_status = GuestWifiSession.AuthStatus.FAILED
         session.failure_reason = "secret controller detail"
         session.save(update_fields=["auth_status", "failure_reason", "updated_at"])

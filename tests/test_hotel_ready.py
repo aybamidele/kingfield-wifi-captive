@@ -46,12 +46,13 @@ def test_admin_csv_export_view_filters_and_exports_selected_columns(admin_client
         email="nomarketing@example.com",
         marketing_consent=False,
     )
+    export_date = timezone.localtime(included.created_at).date().isoformat()
 
     response = admin_client.get(
         reverse("admin:portal_guestwifisession_export"),
         {
-            "start": included.created_at.date().isoformat(),
-            "end": included.created_at.date().isoformat(),
+            "start": export_date,
+            "end": export_date,
             "marketing_consent": "1",
         },
     )

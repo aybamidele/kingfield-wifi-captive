@@ -63,10 +63,15 @@ uv run inv gunicorn
 | `PORTAL_TAGLINE` | no | Short text shown above the brand name. |
 | `PORTAL_LOGO_URL` | no | Prefer local/static URLs because unauthenticated guests may not have internet access. |
 | `PORTAL_BACKGROUND_URL` | no | Prefer local/static URLs for captive portal reliability. |
+| `PORTAL_ALLOWED_REDIRECT_HOSTS` | no | Extra comma-separated hosts allowed for Omada `redirectUrl`. |
 | `PORTAL_PRIMARY_COLOR` | no | Primary button and brand colour. Defaults to `#0b6b61`. |
 | `PORTAL_SUPPORT_TEXT` | no | Help text shown below portal cards. |
 | `PORTAL_SUCCESS_MESSAGE` | no | Success page body copy. |
+| `PORTAL_RATE_LIMIT_ENABLED` | no | Enables cache-based submit rate limiting. Defaults to `True`. |
+| `PORTAL_RATE_LIMIT_ATTEMPTS` | no | Submit attempts per IP per window. Defaults to `20`. |
+| `PORTAL_RATE_LIMIT_WINDOW_SECONDS` | no | Submit rate-limit window. Defaults to `60`. |
 | `DEFAULT_AUTH_MINUTES` | no | Defaults to `1440`. |
+| `SECURE_SSL_REDIRECT` | production | Redirect HTTP to HTTPS when behind a correctly configured proxy. |
 | `SUCCESS_REDIRECT_URL` | no | If unset, successful submissions redirect to `/success/`. |
 | `OMADA_ENABLED` | no | Enables Omada Hotspot API authorisation. Defaults to `False`. |
 | `OMADA_CONTROLLER_URL` | when enabled | Base Omada controller URL. |

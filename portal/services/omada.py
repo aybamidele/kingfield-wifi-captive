@@ -115,8 +115,16 @@ class OmadaHotspotService:
         self.session.mount("https://", adapter)
 
 
-def authorize_guest_session(session: GuestWifiSession) -> OmadaResult:
+def authorize_guest_session(
+    session: GuestWifiSession,
+    request_id: str | None = None,
+) -> OmadaResult:
     if not settings.OMADA_ENABLED:
+        logger.info(
+            "Omada authorization skipped request_id=%s session_id=%s.",
+            request_id,
+            session.pk,
+        )
         session.auth_status = GuestWifiSession.AuthStatus.PENDING
         session.authorized_at = None
         session.failure_reason = ""
@@ -133,6 +141,12 @@ def authorize_guest_session(session: GuestWifiSession) -> OmadaResult:
     try:
         response = OmadaHotspotService().authorize_session(session)
     except OmadaError as exc:
+        logger.warning(
+            "Omada authorization failed request_id=%s session_id=%s reason=%s.",
+            request_id,
+            session.pk,
+            str(exc),
+        )
         session.auth_status = GuestWifiSession.AuthStatus.FAILED
         session.authorized_at = None
         session.omada_response = exc.response
@@ -152,6 +166,11 @@ def authorize_guest_session(session: GuestWifiSession) -> OmadaResult:
             error=str(exc),
         )
 
+    logger.info(
+        "Omada authorization succeeded request_id=%s session_id=%s.",
+        request_id,
+        session.pk,
+    )
     session.auth_status = GuestWifiSession.AuthStatus.AUTHORIZED
     session.authorized_at = timezone.now()
     session.omada_response = response
@@ -214,7 +233,7 @@ def get_success_redirect_url(omada_redirect_url: str | None = None) -> str:
 
 
 def _allowed_redirect_hosts() -> set[str]:
-    hosts = set(settings.ALLOWED_HOSTS)
+    hosts = set(settings.ALLOWED_HOSTS) | set(settings.PORTAL_ALLOWED_REDIRECT_HOSTS)
     success_host = urlparse(settings.SUCCESS_REDIRECT_URL).netloc
     if success_host:
         hosts.add(success_host)
