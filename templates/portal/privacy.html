@@ -5,19 +5,36 @@
 {% block content %}
   <article class="legal-copy">
     <h1 id="page-title">Privacy notice</h1>
+    <h2>What data we collect</h2>
     <p>
-      We collect the details you provide on the Wi-Fi sign-in form, network
-      redirect information supplied by the Wi-Fi system, your IP address, and
-      your browser user agent.
+      {{ portal_brand_name }} collects the details you provide on the Wi-Fi
+      sign-in form, including your name, email address, room number, optional
+      phone number, and consent choices. We also collect network redirect
+      information supplied by the Wi-Fi system, your device MAC address where
+      supplied by the controller, your IP address, and your browser user agent.
     </p>
+    <h2>Why we collect it</h2>
     <p>
       We use this information to provide guest Wi-Fi access, support network
-      operations, and keep an operational record of accepted Wi-Fi terms.
+      operations, protect the service from misuse, and keep an operational
+      record that the Wi-Fi terms were accepted.
     </p>
+    <h2>How long we keep it</h2>
     <p>
-      If you choose to receive hotel news and offers, we store that consent
-      separately from Wi-Fi terms acceptance. You do not need to give marketing
-      consent to use the guest network.
+      Guest Wi-Fi session records are normally kept for {{ data_retention_days }} days,
+      unless a longer period is needed to investigate misuse, comply with
+      legal obligations, or resolve a support request.
+    </p>
+    <h2>Marketing consent</h2>
+    <p>
+      Marketing consent is optional and is stored separately from Wi-Fi terms
+      acceptance. You do not need to give marketing consent to use the guest
+      network.
+    </p>
+    <h2>Deletion requests</h2>
+    <p>
+      To ask about your data or request deletion, contact the hotel team using
+      the support details provided by reception.
     </p>
     <a class="text-link" href="{% url 'portal' %}">Back to Wi-Fi sign-in</a>
   </article>

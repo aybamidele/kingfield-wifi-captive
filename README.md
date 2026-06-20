@@ -58,9 +58,14 @@ uv run inv gunicorn
 | `ALLOWED_HOSTS` | yes | Comma-separated hostnames. |
 | `CSRF_TRUSTED_ORIGINS` | production HTTPS | Comma-separated trusted origins, including scheme. |
 | `DATABASE_URL` | production | PostgreSQL URL. If unset, local SQLite is used. |
-| `PORTAL_BRAND_NAME` | no | Defaults to `Kingfield Hotel Wi-Fi`. |
+| `DATA_RETENTION_DAYS` | no | Guest Wi-Fi session retention period. Defaults to `365`. |
+| `PORTAL_BRAND_NAME` | no | Defaults to `Kingfield Hotel`. |
+| `PORTAL_TAGLINE` | no | Short text shown above the brand name. |
 | `PORTAL_LOGO_URL` | no | Prefer local/static URLs because unauthenticated guests may not have internet access. |
 | `PORTAL_BACKGROUND_URL` | no | Prefer local/static URLs for captive portal reliability. |
+| `PORTAL_PRIMARY_COLOR` | no | Primary button and brand colour. Defaults to `#0b6b61`. |
+| `PORTAL_SUPPORT_TEXT` | no | Help text shown below portal cards. |
+| `PORTAL_SUCCESS_MESSAGE` | no | Success page body copy. |
 | `DEFAULT_AUTH_MINUTES` | no | Defaults to `1440`. |
 | `SUCCESS_REDIRECT_URL` | no | If unset, successful submissions redirect to `/success/`. |
 | `OMADA_ENABLED` | no | Enables Omada Hotspot API authorisation. Defaults to `False`. |
@@ -77,6 +82,8 @@ uv run inv gunicorn
 | `GOOGLE_SHEETS_TIMEOUT_SECONDS` | no | Short webhook timeout. Defaults to `5`. |
 
 See `docs/google-sheets-integration.md` for setup and retry instructions.
+See `docs/dokploy-deployment.md`, `docs/omada-setup.md`, and
+`docs/oc200-connectivity.md` for production deployment and controller setup.
 
 ## Omada external portal parameters
 

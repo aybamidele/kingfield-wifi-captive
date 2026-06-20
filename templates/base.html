@@ -7,7 +7,7 @@
   <title>{% block title %}{{ portal_brand_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'portal/css/main.css' %}">
 </head>
-<body{% if portal_background_url %} style="--portal-bg-image: url('{{ portal_background_url }}');"{% endif %}>
+<body style="--color-primary: {{ portal_primary_color }};{% if portal_background_url %} --portal-bg-image: url('{{ portal_background_url }}');{% endif %}">
   <main class="page-shell">
     <section class="portal-panel" aria-labelledby="page-title">
       <header class="brand-header">
@@ -17,12 +17,16 @@
           <div class="brand-logo-placeholder" aria-hidden="true">{{ portal_brand_name|first }}</div>
         {% endif %}
         <div>
-          <p class="brand-kicker">Guest Wi-Fi</p>
+          <p class="brand-kicker">{{ portal_tagline }}</p>
           <p class="brand-name">{{ portal_brand_name }}</p>
         </div>
       </header>
 
       {% block content %}{% endblock %}
+
+      {% if portal_support_text %}
+        <footer class="support-text">{{ portal_support_text }}</footer>
+      {% endif %}
     </section>
   </main>
 </body>
