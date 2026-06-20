@@ -63,6 +63,14 @@ uv run inv gunicorn
 | `PORTAL_BACKGROUND_URL` | no | Prefer local/static URLs for captive portal reliability. |
 | `DEFAULT_AUTH_MINUTES` | no | Defaults to `1440`. |
 | `SUCCESS_REDIRECT_URL` | no | If unset, successful submissions redirect to `/success/`. |
+| `OMADA_ENABLED` | no | Enables Omada Hotspot API authorisation. Defaults to `False`. |
+| `OMADA_CONTROLLER_URL` | when enabled | Base Omada controller URL. |
+| `OMADA_CONTROLLER_ID` | when enabled | Controller ID path segment used by the Hotspot API. |
+| `OMADA_OPERATOR_USERNAME` | when enabled | Dedicated Hotspot Operator username. Do not use the controller admin account. |
+| `OMADA_OPERATOR_PASSWORD` | when enabled | Dedicated Hotspot Operator password. |
+| `OMADA_VERIFY_SSL` | no | Verify Omada controller TLS certificates. Defaults to `True`. |
+| `OMADA_DEFAULT_SITE` | when enabled | Fallback site when Omada does not send `site`. |
+| `OMADA_TIMEOUT_SECONDS` | no | Request timeout for Omada API calls. Defaults to `5`. |
 | `GOOGLE_SHEETS_ENABLED` | no | Enables optional Apps Script webhook posting. Defaults to `False`. |
 | `GOOGLE_SHEETS_WEBHOOK_URL` | when enabled | Google Apps Script Web App URL. |
 | `GOOGLE_SHEETS_WEBHOOK_SECRET` | when enabled | Shared secret sent in the webhook payload. |

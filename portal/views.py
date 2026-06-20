@@ -1,11 +1,11 @@
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .forms import GuestWifiSessionForm, OMADA_FIELD_MAP
 from .services.google_sheets import send_session_to_google_sheets
+from .services.omada import authorize_guest_session, get_success_redirect_url
 
 
 @require_GET
@@ -25,8 +25,12 @@ def portal_submit(request):
     form = GuestWifiSessionForm(request.POST)
     if form.is_valid():
         session = form.save(request)
+        omada_result = authorize_guest_session(session)
         send_session_to_google_sheets(session)
-        return redirect(settings.SUCCESS_REDIRECT_URL or reverse("success"))
+        if settings.OMADA_ENABLED and not omada_result.success:
+            return render(request, "portal/error.html", status=200)
+
+        return redirect(get_success_redirect_url(session.redirect_url))
 
     return render(request, "portal/portal.html", {"form": form}, status=200)
 
