@@ -1,0 +1,29 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ portal_brand_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'portal/css/main.css' %}">
+</head>
+<body{% if portal_background_url %} style="--portal-bg-image: url('{{ portal_background_url }}');"{% endif %}>
+  <main class="page-shell">
+    <section class="portal-panel" aria-labelledby="page-title">
+      <header class="brand-header">
+        {% if portal_logo_url %}
+          <img class="brand-logo" src="{{ portal_logo_url }}" alt="{{ portal_brand_name }} logo">
+        {% else %}
+          <div class="brand-logo-placeholder" aria-hidden="true">{{ portal_brand_name|first }}</div>
+        {% endif %}
+        <div>
+          <p class="brand-kicker">Guest Wi-Fi</p>
+          <p class="brand-name">{{ portal_brand_name }}</p>
+        </div>
+      </header>
+
+      {% block content %}{% endblock %}
+    </section>
+  </main>
+</body>
+</html>

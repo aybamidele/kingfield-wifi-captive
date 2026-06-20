@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "python",
+  "packages": {
+    "python": "3.12"
+  },
+  "deploy": {
+    "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn wifi_portal.wsgi:application --bind 0.0.0.0:${PORT:-8000}",
+    "variables": {
+      "LANG": "en_US.UTF-8",
+      "LC_ALL": "en_US.UTF-8"
+    }
+  }
+}

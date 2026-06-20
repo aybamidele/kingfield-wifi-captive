@@ -1,0 +1,32 @@
+[project]
+name = "kingfield-wifi-captive"
+version = "0.1.0"
+description = "External branded captive portal for TP-Link Omada guest Wi-Fi."
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.0,<7.0",
+    "django-environ>=0.12,<1.0",
+    "gunicorn>=23.0,<24.0",
+    "invoke>=2.2,<3.0",
+    "psycopg[binary]>=3.3,<4.0",
+    "requests>=2.32,<3.0",
+    "whitenoise>=6.11,<7.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0,<10.0",
+    "pytest-django>=4.11,<5.0",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "wifi_portal.settings"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

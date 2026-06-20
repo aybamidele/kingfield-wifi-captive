@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Wi-Fi terms - {{ portal_brand_name }}{% endblock %}
+
+{% block content %}
+  <article class="legal-copy">
+    <h1 id="page-title">Wi-Fi terms of use</h1>
+    <p>
+      Guest Wi-Fi is provided for lawful, reasonable personal use during your
+      stay. Do not use the service for activity that is unlawful, harmful,
+      abusive, or disruptive to other guests or hotel systems.
+    </p>
+    <p>
+      The hotel may restrict or suspend access where necessary to protect the
+      network, comply with legal obligations, or investigate misuse.
+    </p>
+    <p>
+      By continuing, you confirm that the details you provide are accurate and
+      that you accept these Wi-Fi terms of use.
+    </p>
+    <a class="text-link" href="{% url 'portal' %}">Back to Wi-Fi sign-in</a>
+  </article>
+{% endblock %}

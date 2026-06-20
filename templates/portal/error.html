@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Connection error - {{ portal_brand_name }}{% endblock %}
+
+{% block content %}
+  <div class="status-block status-block-error">
+    <h1 id="page-title">Connection issue</h1>
+    <p>We could not complete your Wi-Fi sign-in. Please try again or contact reception.</p>
+    <a class="button-link" href="{% url 'portal' %}">Return to Wi-Fi sign-in</a>
+  </div>
+{% endblock %}

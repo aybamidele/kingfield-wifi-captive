@@ -1,0 +1,50 @@
+project:
+  name: "Kingfield Wi-Fi Captive Portal"
+  description: "Django external captive portal for a hotel guest Wi-Fi network using TP-Link Omada."
+  deployment_target: "Dokploy/Railpack"
+  timezone: "Europe/London"
+
+stack:
+  python_manager: "uv"
+  web_framework: "Django 6.x"
+  database: "PostgreSQL in production, SQLite fallback locally"
+  ui: "Django templates with local CSS"
+  tests: "pytest + pytest-django"
+  deployment: "Gunicorn + WhiteNoise + Railpack"
+
+users:
+  roles:
+    - name: "guest"
+      permissions: "Submit portal form and view public legal/success pages"
+    - name: "admin"
+      permissions: "View and manage saved guest Wi-Fi sessions in Django admin"
+
+core_flows:
+  - "Guest opens Omada external portal URL with redirect parameters"
+  - "Guest submits full name, email, room number, optional phone, required terms, and optional marketing consent"
+  - "System stores consent timestamps, request metadata, and Omada redirect parameters"
+  - "Admin reviews saved guest sessions"
+
+data_models:
+  - name: "GuestWifiSession"
+    fields:
+      - "guest identity and contact fields"
+      - "separate terms and marketing consent state/timestamps"
+      - "Omada redirect parameters"
+      - "authorization status and response metadata"
+      - "client IP and user agent"
+
+privacy:
+  sensitive_data: true
+  audit_logging: false
+  notes: "Marketing consent is optional and separate from terms acceptance."
+
+mvp_scope:
+  include:
+    - "Public portal, success, terms, privacy, and health routes"
+    - "Session persistence and Django admin"
+    - "Environment-driven settings with SQLite fallback"
+    - "Dokploy/Railpack deployment docs"
+  exclude:
+    - "Live Omada controller authorization API integration"
+    - "Frontend framework or external CDN assets"

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Wi-Fi sign-in - {{ portal_brand_name }}{% endblock %}
+
+{% block content %}
+  <h1 id="page-title">Connect to guest Wi-Fi</h1>
+  <p class="lead">Enter your details to continue to the hotel guest network.</p>
+
+  <form class="portal-form" action="{% url 'portal_submit' %}" method="post" novalidate>
+    {% csrf_token %}
+
+    {% for field in form.omada_fields %}
+      <input type="hidden" name="{{ field.name }}" value="{{ field.value|default_if_none:'' }}">
+    {% endfor %}
+
+    <div class="field">
+      <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+      {{ form.full_name }}
+      {% for error in form.full_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+      {{ form.email }}
+      {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.room_number.id_for_label }}">{{ form.room_number.label }}</label>
+      {{ form.room_number }}
+      {% for error in form.room_number.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+      {{ form.phone }}
+      {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="checkbox-field">
+      {{ form.terms_accepted }}
+      <label for="{{ form.terms_accepted.id_for_label }}">
+        I accept the <a href="{% url 'terms' %}">Wi-Fi terms of use</a>.
+      </label>
+    </div>
+    {% for error in form.terms_accepted.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+
+    <div class="checkbox-field">
+      {{ form.marketing_consent }}
+      <label for="{{ form.marketing_consent.id_for_label }}">
+        I agree to receive optional hotel news and offers.
+      </label>
+    </div>
+
+    <p class="privacy-note">
+      Marketing consent is optional and is not required for internet access.
+      See our <a href="{% url 'privacy' %}">privacy notice</a>.
+    </p>
+
+    <button class="primary-button" type="submit">Connect</button>
+  </form>
+{% endblock %}
