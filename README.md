@@ -63,6 +63,12 @@ uv run inv gunicorn
 | `PORTAL_BACKGROUND_URL` | no | Prefer local/static URLs for captive portal reliability. |
 | `DEFAULT_AUTH_MINUTES` | no | Defaults to `1440`. |
 | `SUCCESS_REDIRECT_URL` | no | If unset, successful submissions redirect to `/success/`. |
+| `GOOGLE_SHEETS_ENABLED` | no | Enables optional Apps Script webhook posting. Defaults to `False`. |
+| `GOOGLE_SHEETS_WEBHOOK_URL` | when enabled | Google Apps Script Web App URL. |
+| `GOOGLE_SHEETS_WEBHOOK_SECRET` | when enabled | Shared secret sent in the webhook payload. |
+| `GOOGLE_SHEETS_TIMEOUT_SECONDS` | no | Short webhook timeout. Defaults to `5`. |
+
+See `docs/google-sheets-integration.md` for setup and retry instructions.
 
 ## Omada external portal parameters
 

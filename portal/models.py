@@ -14,6 +14,12 @@ class GuestWifiSession(models.Model):
         AUTHORIZED = "authorized", "Authorized"
         FAILED = "failed", "Failed"
 
+    class GoogleSheetsStatus(models.TextChoices):
+        NOT_CONFIGURED = "not_configured", "Not configured"
+        PENDING = "pending", "Pending"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -51,6 +57,14 @@ class GuestWifiSession(models.Model):
     failure_reason = models.TextField(blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
+    google_sheets_status = models.CharField(
+        max_length=20,
+        choices=GoogleSheetsStatus.choices,
+        default=GoogleSheetsStatus.NOT_CONFIGURED,
+    )
+    google_sheets_sent_at = models.DateTimeField(null=True, blank=True)
+    google_sheets_response = models.JSONField(null=True, blank=True)
+    google_sheets_error = models.TextField(blank=True)
 
     class Meta:
         ordering = ["-created_at"]

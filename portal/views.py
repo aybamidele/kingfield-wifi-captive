@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .forms import GuestWifiSessionForm, OMADA_FIELD_MAP
+from .services.google_sheets import send_session_to_google_sheets
 
 
 @require_GET
@@ -23,7 +24,8 @@ def portal_form(request):
 def portal_submit(request):
     form = GuestWifiSessionForm(request.POST)
     if form.is_valid():
-        form.save(request)
+        session = form.save(request)
+        send_session_to_google_sheets(session)
         return redirect(settings.SUCCESS_REDIRECT_URL or reverse("success"))
 
     return render(request, "portal/portal.html", {"form": form}, status=200)
