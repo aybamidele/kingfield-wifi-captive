@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.urls import path
 from django.utils.dateparse import parse_date
 
-from .models import GuestWifiSession
+from .models import GuestWifiSession, PortalCustomization
 from .services import google_sheets
 
 CSV_EXPORT_FIELDS = (
@@ -21,6 +21,41 @@ CSV_EXPORT_FIELDS = (
     "auth_status",
     "authorized_at",
 )
+
+
+@admin.register(PortalCustomization)
+class PortalCustomizationAdmin(admin.ModelAdmin):
+    list_display = ("brand_name", "tagline", "primary_color", "updated_at")
+    readonly_fields = ("updated_at",)
+    fieldsets = (
+        (
+            "Branding",
+            {
+                "fields": (
+                    "brand_name",
+                    "tagline",
+                    "logo_url",
+                    "background_url",
+                    "primary_color",
+                )
+            },
+        ),
+        (
+            "Copy",
+            {
+                "fields": (
+                    "support_text",
+                    "success_message",
+                )
+            },
+        ),
+        ("Timestamps", {"fields": ("updated_at",)}),
+    )
+
+    def has_add_permission(self, request):
+        if PortalCustomization.objects.exists():
+            return False
+        return super().has_add_permission(request)
 
 
 @admin.register(GuestWifiSession)

@@ -27,6 +27,44 @@ def test_allowed_redirect_hosts_setting_controls_omada_redirect(settings):
     )
 
 
+def test_bare_hostname_redirect_url_is_normalized_to_https(settings):
+    settings.ALLOWED_HOSTS = ["portal.example.com"]
+    settings.PORTAL_ALLOWED_REDIRECT_HOSTS = ["www.google.com"]
+    settings.SUCCESS_REDIRECT_URL = "/success/"
+
+    assert get_success_redirect_url("www.google.com") == "https://www.google.com"
+
+
+def test_absolute_https_redirect_url_stays_unchanged(settings):
+    settings.ALLOWED_HOSTS = ["portal.example.com"]
+    settings.PORTAL_ALLOWED_REDIRECT_HOSTS = ["www.google.com"]
+    settings.SUCCESS_REDIRECT_URL = "/success/"
+
+    assert (
+        get_success_redirect_url("https://www.google.com")
+        == "https://www.google.com"
+    )
+
+
+def test_invalid_redirect_target_falls_back_to_success_page(settings):
+    settings.ALLOWED_HOSTS = ["portal.example.com"]
+    settings.PORTAL_ALLOWED_REDIRECT_HOSTS = ["www.google.com"]
+    settings.SUCCESS_REDIRECT_URL = "/success/"
+
+    assert get_success_redirect_url("javascript:alert(1)") == "/success/"
+
+
+def test_bare_hostname_success_redirect_url_is_normalized_to_https(settings):
+    settings.ALLOWED_HOSTS = ["portal.example.com"]
+    settings.PORTAL_ALLOWED_REDIRECT_HOSTS = []
+    settings.SUCCESS_REDIRECT_URL = "www.google.com"
+
+    assert (
+        get_success_redirect_url("https://evil.example.com/phish")
+        == "https://www.google.com"
+    )
+
+
 @pytest.mark.django_db
 def test_form_submission_logs_request_id(client, caplog, monkeypatch, settings):
     settings.OMADA_ENABLED = False

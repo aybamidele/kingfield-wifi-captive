@@ -86,6 +86,13 @@ uv run inv gunicorn
 | `GOOGLE_SHEETS_WEBHOOK_SECRET` | when enabled | Shared secret sent in the webhook payload. |
 | `GOOGLE_SHEETS_TIMEOUT_SECONDS` | no | Short webhook timeout. Defaults to `5`. |
 
+## Portal UI customization
+
+Edit portal branding and copy in Django admin under **Portal customization**.
+Create one customization record; its values override the `PORTAL_*` environment
+variables used by the public portal. If no customization record exists, the app
+continues to use `.env` values as bootstrap defaults.
+
 See `docs/google-sheets-integration.md` for setup and retry instructions.
 See `docs/dokploy-deployment.md`, `docs/omada-setup.md`, and
 `docs/oc200-connectivity.md` for production deployment and controller setup.

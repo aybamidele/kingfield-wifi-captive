@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.contrib import admin
 from django.urls import reverse
 from django.utils import timezone
@@ -22,6 +23,7 @@ def test_health_returns_simple_status(client):
     assert response.json() == {"status": "ok"}
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "path",
     ["/portal/", "/success/", "/terms/", "/privacy/"],
@@ -153,6 +155,7 @@ def test_missing_optional_omada_parameters_are_handled_gracefully(client):
     assert session.redirect_url is None
 
 
+@pytest.mark.django_db
 def test_portal_get_preserves_omada_parameters_as_hidden_fields(client):
     response = client.get(
         "/portal/",
@@ -164,6 +167,7 @@ def test_portal_get_preserves_omada_parameters_as_hidden_fields(client):
     )
 
     content = response.content.decode()
+    assert 'action="/portal/submit/"' in content
     assert 'name="clientMac" value="AA:BB:CC:DD:EE:04"' in content
     assert 'name="ssidName" value="Kingfield Guest"' in content
     assert 'name="redirectUrl" value="https://example.com/start"' in content
@@ -171,3 +175,17 @@ def test_portal_get_preserves_omada_parameters_as_hidden_fields(client):
 
 def test_guest_wifi_session_is_registered_in_admin():
     assert GuestWifiSession in admin.site._registry
+
+
+def test_portal_customization_is_registered_in_admin():
+    customization_model = next(
+        (
+            model
+            for model in apps.get_models()
+            if model.__name__ == "PortalCustomization"
+        ),
+        None,
+    )
+
+    assert customization_model is not None
+    assert customization_model in admin.site._registry

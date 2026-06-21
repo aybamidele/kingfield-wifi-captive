@@ -222,22 +222,77 @@ def omada_authorization_time() -> int:
 
 
 def get_success_redirect_url(omada_redirect_url: str | None = None) -> str:
-    if omada_redirect_url and url_has_allowed_host_and_scheme(
-        omada_redirect_url,
-        allowed_hosts=_allowed_redirect_hosts(),
-        require_https=False,
-    ):
-        return omada_redirect_url
+    redirect_url = _normalize_redirect_url(omada_redirect_url)
+    if _is_safe_absolute_redirect_url(redirect_url, _allowed_redirect_hosts()):
+        return redirect_url
 
-    return settings.SUCCESS_REDIRECT_URL or reverse("success")
+    success_url = _normalize_redirect_url(settings.SUCCESS_REDIRECT_URL)
+    if _is_safe_success_redirect_url(success_url):
+        return success_url
+
+    return reverse("success")
 
 
 def _allowed_redirect_hosts() -> set[str]:
     hosts = set(settings.ALLOWED_HOSTS) | set(settings.PORTAL_ALLOWED_REDIRECT_HOSTS)
-    success_host = urlparse(settings.SUCCESS_REDIRECT_URL).netloc
+    success_host = urlparse(
+        _normalize_redirect_url(settings.SUCCESS_REDIRECT_URL)
+    ).netloc
     if success_host:
         hosts.add(success_host)
     return hosts
+
+
+def _normalize_redirect_url(url: str | None) -> str:
+    if not url:
+        return ""
+
+    redirect_url = url.strip()
+    if not redirect_url:
+        return ""
+    if redirect_url.startswith("//"):
+        return f"https:{redirect_url}"
+    if redirect_url.startswith("/"):
+        return redirect_url
+
+    parsed_url = urlparse(redirect_url)
+    if parsed_url.scheme:
+        return redirect_url
+    if _looks_like_bare_hostname(redirect_url):
+        return f"https://{redirect_url}"
+    return redirect_url
+
+
+def _looks_like_bare_hostname(url: str) -> bool:
+    if any(character.isspace() for character in url):
+        return False
+
+    hostname = url.split("/", 1)[0].split("?", 1)[0].split("#", 1)[0]
+    return "." in hostname
+
+
+def _is_safe_absolute_redirect_url(url: str, allowed_hosts: set[str]) -> bool:
+    parsed_url = urlparse(url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        return False
+
+    return url_has_allowed_host_and_scheme(
+        url,
+        allowed_hosts=allowed_hosts,
+        require_https=False,
+    )
+
+
+def _is_safe_success_redirect_url(url: str) -> bool:
+    parsed_url = urlparse(url)
+    if parsed_url.scheme or parsed_url.netloc:
+        return _is_safe_absolute_redirect_url(url, _allowed_redirect_hosts())
+
+    return url_has_allowed_host_and_scheme(
+        url,
+        allowed_hosts=set(settings.ALLOWED_HOSTS),
+        require_https=False,
+    )
 
 
 def _is_success_response(response_body: dict) -> bool:

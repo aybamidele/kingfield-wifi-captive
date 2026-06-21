@@ -11,7 +11,7 @@ from django.utils import timezone
 import pytest
 
 from portal.admin import GuestWifiSessionAdmin
-from portal.models import GuestWifiSession
+from portal.models import GuestWifiSession, PortalCustomization
 
 
 def make_session(**overrides):
@@ -128,6 +128,7 @@ def test_purge_old_sessions_deletes_records_older_than_days():
     assert GuestWifiSession.objects.filter(id=recent_session.id).exists()
 
 
+@pytest.mark.django_db
 def test_privacy_and_terms_pages_include_hotel_ready_content(client, settings):
     settings.PORTAL_BRAND_NAME = "Kingfield Hotel"
     settings.DATA_RETENTION_DAYS = 365
@@ -144,6 +145,7 @@ def test_privacy_and_terms_pages_include_hotel_ready_content(client, settings):
     assert "guest devices remain your responsibility" in terms.lower()
 
 
+@pytest.mark.django_db
 def test_portal_uses_branding_context_and_hotel_copy(client, settings):
     settings.PORTAL_BRAND_NAME = "Kingfield Hotel"
     settings.PORTAL_TAGLINE = "Fast guest Wi-Fi"
@@ -163,12 +165,46 @@ def test_portal_uses_branding_context_and_hotel_copy(client, settings):
     assert "Need help? Contact reception." in content
 
 
+@pytest.mark.django_db
 def test_success_page_uses_configured_message(client, settings):
     settings.PORTAL_SUCCESS_MESSAGE = "You are online. Enjoy your stay."
 
     response = client.get("/success/")
 
     assert "You are online. Enjoy your stay." in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_admin_portal_customization_overrides_env_branding(client, settings):
+    settings.PORTAL_BRAND_NAME = "Env Hotel"
+    settings.PORTAL_TAGLINE = "Env Wi-Fi"
+    settings.PORTAL_LOGO_URL = "/static/env-logo.svg"
+    settings.PORTAL_BACKGROUND_URL = "/static/env-background.jpg"
+    settings.PORTAL_PRIMARY_COLOR = "#111111"
+    settings.PORTAL_SUPPORT_TEXT = "Env support."
+    settings.PORTAL_SUCCESS_MESSAGE = "Env success."
+    PortalCustomization.objects.create(
+        brand_name="Admin Hotel",
+        tagline="Admin Wi-Fi",
+        logo_url="/static/admin-logo.svg",
+        background_url="/static/admin-background.jpg",
+        primary_color="#abcdef",
+        support_text="Admin support.",
+        success_message="Admin success.",
+    )
+
+    portal_response = client.get("/portal/")
+    success_response = client.get("/success/")
+
+    portal_content = portal_response.content.decode()
+    assert "Welcome to Admin Hotel Wi-Fi" in portal_content
+    assert "Admin Wi-Fi" in portal_content
+    assert 'src="/static/admin-logo.svg"' in portal_content
+    assert "--portal-bg-image: url('/static/admin-background.jpg')" in portal_content
+    assert "--color-primary: #abcdef" in portal_content
+    assert "Admin support." in portal_content
+    assert "Env Hotel" not in portal_content
+    assert "Admin success." in success_response.content.decode()
 
 
 def test_production_settings_smoke(settings):
