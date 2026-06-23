@@ -1,5 +1,6 @@
 from django.apps import apps
 from django.contrib import admin
+from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
@@ -26,7 +27,7 @@ def test_health_returns_simple_status(client):
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "path",
-    ["/portal/", "/success/", "/terms/", "/privacy/"],
+    ["/success/", "/terms/", "/privacy/"],
 )
 def test_public_pages_render_without_external_assets(client, settings, path):
     settings.PORTAL_BRAND_NAME = "Kingfield Hotel"
@@ -38,6 +39,14 @@ def test_public_pages_render_without_external_assets(client, settings, path):
     assert "Kingfield Hotel" in content
     assert "https://fonts.googleapis.com" not in content
     assert "cdn." not in content
+
+
+@pytest.mark.django_db
+def test_portal_without_omada_session_shows_missing_session_message(client):
+    response = client.get("/portal/")
+
+    assert response.status_code == 400
+    assert "Missing captive portal session" in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -108,6 +117,10 @@ def test_marketing_consent_is_optional_but_timestamped_when_checked(client):
             "terms_accepted": "on",
             "marketing_consent": "on",
             "clientMac": "AA:BB:CC:DD:EE:01",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
         },
     )
 
@@ -127,6 +140,10 @@ def test_terms_acceptance_is_required_for_internet_access(client):
             "room_number": "101",
             "marketing_consent": "on",
             "clientMac": "AA:BB:CC:DD:EE:02",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
         },
     )
 
@@ -136,7 +153,7 @@ def test_terms_acceptance_is_required_for_internet_access(client):
 
 
 @pytest.mark.django_db
-def test_missing_optional_omada_parameters_are_handled_gracefully(client):
+def test_missing_omada_session_parameters_are_rejected(client):
     response = client.post(
         "/portal/submit/",
         data={
@@ -148,11 +165,29 @@ def test_missing_optional_omada_parameters_are_handled_gracefully(client):
         },
     )
 
-    assert response.status_code == 302
-    session = GuestWifiSession.objects.get()
-    assert session.client_mac == "AA:BB:CC:DD:EE:03"
-    assert session.ap_mac is None
-    assert session.redirect_url is None
+    assert response.status_code == 400
+    assert GuestWifiSession.objects.count() == 0
+    assert "Missing captive portal session" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_portal_submit_logs_before_missing_session_rejection(client, caplog):
+    caplog.set_level("INFO")
+
+    response = client.post("/portal/submit/", data={})
+
+    assert response.status_code == 400
+    assert "Portal submit received request_id=" in caplog.text
+
+
+@pytest.mark.django_db
+def test_portal_submit_without_csrf_token_returns_controlled_missing_session():
+    csrf_client = Client(enforce_csrf_checks=True)
+
+    response = csrf_client.post("/portal/submit/", data={})
+
+    assert response.status_code == 400
+    assert "Missing captive portal session" in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -161,7 +196,10 @@ def test_portal_get_preserves_omada_parameters_as_hidden_fields(client):
         "/portal/",
         {
             "clientMac": "AA:BB:CC:DD:EE:04",
+            "apMac": "11:22:33:44:55:66",
             "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
             "redirectUrl": "https://example.com/start",
         },
     )
@@ -171,6 +209,56 @@ def test_portal_get_preserves_omada_parameters_as_hidden_fields(client):
     assert 'name="clientMac" value="AA:BB:CC:DD:EE:04"' in content
     assert 'name="ssidName" value="Kingfield Guest"' in content
     assert 'name="redirectUrl" value="https://example.com/start"' in content
+
+
+@pytest.mark.django_db
+def test_portal_get_preserves_ssid_alias_and_origin_url(client):
+    response = client.get(
+        "/portal/",
+        {
+            "clientMac": "AA:BB:CC:DD:EE:05",
+            "apMac": "11:22:33:44:55:66",
+            "ssid": "KINGFIELD GUEST WIFI",
+            "radioId": "1",
+            "site": "site-id",
+            "originUrl": "https://example.com/original",
+        },
+    )
+
+    content = response.content.decode()
+    assert response.status_code == 200
+    assert 'action="/portal/submit/"' in content
+    assert 'name="ssid" value="KINGFIELD GUEST WIFI"' in content
+    assert 'name="originUrl" value="https://example.com/original"' in content
+
+
+@pytest.mark.django_db
+def test_portal_submit_uses_origin_url_when_redirect_url_is_missing(client, settings):
+    settings.OMADA_ENABLED = False
+    settings.PORTAL_ALLOWED_REDIRECT_HOSTS = ["example.com"]
+
+    response = client.post(
+        "/portal/submit/",
+        data={
+            "full_name": "Origin Guest",
+            "email": "origin@example.com",
+            "room_number": "42",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:06",
+            "apMac": "11:22:33:44:55:66",
+            "ssid": "KINGFIELD GUEST WIFI",
+            "radioId": "1",
+            "site": "site-id",
+            "originUrl": "https://example.com/original",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response["Location"] == "https://example.com/original"
+    assert (
+        GuestWifiSession.objects.get().redirect_url
+        == "https://example.com/original"
+    )
 
 
 def test_guest_wifi_session_is_registered_in_admin():

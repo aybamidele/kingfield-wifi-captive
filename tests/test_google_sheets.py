@@ -176,11 +176,15 @@ def test_form_submission_still_succeeds_when_google_sheets_fails(
         data={
             "full_name": "Grace Hopper",
             "email": "grace@example.com",
-            "room_number": "803",
-            "terms_accepted": "on",
-            "clientMac": "AA:BB:CC:DD:EE:01",
-        },
-    )
+                "room_number": "803",
+                "terms_accepted": "on",
+                "clientMac": "AA:BB:CC:DD:EE:01",
+                "apMac": "11:22:33:44:55:66",
+                "ssidName": "Kingfield Guest",
+                "radioId": "1",
+                "site": "site-id",
+            },
+        )
 
     assert response.status_code == 302
     assert response["Location"] == "/success/"

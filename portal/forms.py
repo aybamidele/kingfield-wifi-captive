@@ -15,6 +15,25 @@ OMADA_FIELD_MAP = {
     "redirectUrl": "redirect_url",
     "t": "omada_timestamp",
 }
+OMADA_EXTRA_FIELDS = ("ssid", "originUrl")
+OMADA_FORM_FIELDS = (*OMADA_FIELD_MAP, *OMADA_EXTRA_FIELDS)
+
+
+def has_required_omada_session(data):
+    client_mac = _field_value(data, "clientMac")
+    site = _field_value(data, "site") or settings.OMADA_DEFAULT_SITE
+    ssid_name = _field_value(data, "ssidName") or _field_value(data, "ssid")
+    ap_params = _field_value(data, "apMac") and ssid_name and _field_value(
+        data,
+        "radioId",
+    )
+    gateway_params = _field_value(data, "gatewayMac") and _field_value(data, "vid")
+
+    return bool(client_mac and site and (ap_params or gateway_params))
+
+
+def _field_value(data, field):
+    return (data.get(field) or "").strip()
 
 
 class GuestWifiSessionForm(forms.Form):
@@ -54,20 +73,26 @@ class GuestWifiSessionForm(forms.Form):
     gatewayMac = forms.CharField(required=False, widget=forms.HiddenInput())
     vid = forms.CharField(required=False, widget=forms.HiddenInput())
     ssidName = forms.CharField(required=False, widget=forms.HiddenInput())
+    ssid = forms.CharField(required=False, widget=forms.HiddenInput())
     radioId = forms.CharField(required=False, widget=forms.HiddenInput())
     site = forms.CharField(required=False, widget=forms.HiddenInput())
     redirectUrl = forms.CharField(required=False, widget=forms.HiddenInput())
+    originUrl = forms.CharField(required=False, widget=forms.HiddenInput())
     t = forms.CharField(required=False, widget=forms.HiddenInput())
 
     @property
     def omada_fields(self):
-        return [self[field_name] for field_name in OMADA_FIELD_MAP]
+        return [self[field_name] for field_name in OMADA_FORM_FIELDS]
 
     def save(self, request):
         now = timezone.now()
         omada_values = {}
         for form_field, model_field in OMADA_FIELD_MAP.items():
             value = self.cleaned_data.get(form_field, "").strip()
+            if form_field == "ssidName":
+                value = value or self.cleaned_data.get("ssid", "").strip()
+            if form_field == "redirectUrl":
+                value = value or self.cleaned_data.get("originUrl", "").strip()
             if model_field == "client_mac":
                 omada_values[model_field] = value
             else:

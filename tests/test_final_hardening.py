@@ -70,7 +70,10 @@ def test_form_submission_logs_request_id(client, caplog, monkeypatch, settings):
     settings.OMADA_ENABLED = False
     settings.PORTAL_RATE_LIMIT_ENABLED = False
     caplog.set_level(logging.INFO)
-    monkeypatch.setattr("portal.views.send_session_to_google_sheets", lambda session: None)
+    monkeypatch.setattr(
+        "portal.views.send_session_to_google_sheets",
+        lambda session: None,
+    )
 
     response = client.post(
         "/portal/submit/",
@@ -80,6 +83,10 @@ def test_form_submission_logs_request_id(client, caplog, monkeypatch, settings):
             "room_number": "101",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:10",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
         },
     )
 
@@ -101,19 +108,38 @@ def test_portal_submit_rate_limiter_returns_friendly_error(
     cache.clear()
     monkeypatch.setattr(
         "portal.views.authorize_guest_session",
-        lambda session, **kwargs: type("Result", (), {"success": False, "skipped": True})(),
+        lambda session, **kwargs: type(
+            "Result",
+            (),
+            {"success": False, "skipped": True},
+        )(),
     )
-    monkeypatch.setattr("portal.views.send_session_to_google_sheets", lambda session: None)
+    monkeypatch.setattr(
+        "portal.views.send_session_to_google_sheets",
+        lambda session: None,
+    )
     data = {
         "full_name": "Rate Limited Guest",
         "email": "rate@example.com",
         "room_number": "102",
         "terms_accepted": "on",
         "clientMac": "AA:BB:CC:DD:EE:11",
+        "apMac": "11:22:33:44:55:66",
+        "ssidName": "Kingfield Guest",
+        "radioId": "1",
+        "site": "site-id",
     }
 
-    first_response = client.post("/portal/submit/", data=data, REMOTE_ADDR="198.51.100.1")
-    second_response = client.post("/portal/submit/", data=data, REMOTE_ADDR="198.51.100.1")
+    first_response = client.post(
+        "/portal/submit/",
+        data=data,
+        REMOTE_ADDR="198.51.100.1",
+    )
+    second_response = client.post(
+        "/portal/submit/",
+        data=data,
+        REMOTE_ADDR="198.51.100.1",
+    )
 
     assert first_response.status_code == 302
     assert second_response.status_code == 429

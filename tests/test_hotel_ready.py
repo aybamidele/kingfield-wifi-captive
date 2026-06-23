@@ -152,7 +152,16 @@ def test_portal_uses_branding_context_and_hotel_copy(client, settings):
     settings.PORTAL_PRIMARY_COLOR = "#123456"
     settings.PORTAL_SUPPORT_TEXT = "Need help? Contact reception."
 
-    response = client.get("/portal/")
+    response = client.get(
+        "/portal/",
+        {
+            "clientMac": "AA:BB:CC:DD:EE:01",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
     content = response.content.decode()
 
     assert "Welcome to Kingfield Hotel Wi-Fi" in content
@@ -193,7 +202,16 @@ def test_admin_portal_customization_overrides_env_branding(client, settings):
         success_message="Admin success.",
     )
 
-    portal_response = client.get("/portal/")
+    portal_response = client.get(
+        "/portal/",
+        {
+            "clientMac": "AA:BB:CC:DD:EE:02",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
     success_response = client.get("/success/")
 
     portal_content = portal_response.content.decode()
