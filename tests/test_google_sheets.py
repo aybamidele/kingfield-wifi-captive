@@ -1,12 +1,11 @@
 from io import StringIO
 
+import pytest
+import requests
 from django.contrib import admin
 from django.core.management import call_command
 from django.test import RequestFactory
 from django.utils import timezone
-
-import pytest
-import requests
 
 from portal.admin import GuestWifiSessionAdmin
 from portal.models import GuestWifiSession
@@ -48,7 +47,10 @@ def test_google_sheets_disabled_returns_skipped_and_marks_not_configured(
 
     session.refresh_from_db()
     assert result.outcome == "skipped"
-    assert session.google_sheets_status == GuestWifiSession.GoogleSheetsStatus.NOT_CONFIGURED
+    assert (
+        session.google_sheets_status
+        == GuestWifiSession.GoogleSheetsStatus.NOT_CONFIGURED
+    )
     assert session.google_sheets_sent_at is None
     assert session.google_sheets_error == ""
 
@@ -176,15 +178,16 @@ def test_form_submission_still_succeeds_when_google_sheets_fails(
         data={
             "full_name": "Grace Hopper",
             "email": "grace@example.com",
-                "room_number": "803",
-                "terms_accepted": "on",
-                "clientMac": "AA:BB:CC:DD:EE:01",
-                "apMac": "11:22:33:44:55:66",
-                "ssidName": "Kingfield Guest",
-                "radioId": "1",
-                "site": "site-id",
-            },
-        )
+            "confirm_email": "grace@example.com",
+            "room_number": "803",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:01",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
 
     assert response.status_code == 302
     assert response["Location"] == "/success/"
@@ -246,7 +249,10 @@ def test_management_command_dry_run_does_not_call_service(monkeypatch):
 
     failed_session.refresh_from_db()
     assert "1 failed Google Sheets session would be retried." in out.getvalue()
-    assert failed_session.google_sheets_status == GuestWifiSession.GoogleSheetsStatus.FAILED
+    assert (
+        failed_session.google_sheets_status
+        == GuestWifiSession.GoogleSheetsStatus.FAILED
+    )
 
 
 @pytest.mark.django_db

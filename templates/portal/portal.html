@@ -26,6 +26,12 @@
     </div>
 
     <div class="field">
+      <label for="{{ form.confirm_email.id_for_label }}">{{ form.confirm_email.label }}</label>
+      {{ form.confirm_email }}
+      {% for error in form.confirm_email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
       <label for="{{ form.room_number.id_for_label }}">{{ form.room_number.label }}</label>
       {{ form.room_number }}
       {% for error in form.room_number.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
@@ -33,7 +39,11 @@
 
     <div class="field">
       <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
-      {{ form.phone }}
+      <div class="phone-input-group">
+        {{ form.phone_country_code }}
+        {{ form.phone }}
+      </div>
+      {% for error in form.phone_country_code.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 

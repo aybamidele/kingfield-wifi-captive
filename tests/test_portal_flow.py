@@ -1,10 +1,8 @@
+import pytest
 from django.apps import apps
 from django.contrib import admin
 from django.test import Client
-from django.urls import reverse
 from django.utils import timezone
-
-import pytest
 
 from portal.models import GuestWifiSession
 
@@ -29,9 +27,7 @@ def test_health_returns_simple_status(client):
     "path",
     ["/success/", "/terms/", "/privacy/"],
 )
-def test_public_pages_render_without_external_assets(client, settings, path):
-    settings.PORTAL_BRAND_NAME = "Kingfield Hotel"
-
+def test_public_pages_render_without_external_assets(client, path):
     response = client.get(path)
 
     assert response.status_code == 200
@@ -59,8 +55,10 @@ def test_portal_form_saves_guest_session_with_omada_parameters(client, settings)
         data={
             "full_name": "Ada Lovelace",
             "email": "ada@example.com",
+            "confirm_email": "ada@example.com",
             "room_number": "1204",
-            "phone": "+44 7000 000000",
+            "phone_country_code": "+44",
+            "phone": "7000 000000",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:FF",
             "apMac": "11:22:33:44:55:66",
@@ -83,7 +81,7 @@ def test_portal_form_saves_guest_session_with_omada_parameters(client, settings)
     assert session.full_name == "Ada Lovelace"
     assert session.email == "ada@example.com"
     assert session.room_number == "1204"
-    assert session.phone == "+44 7000 000000"
+    assert session.phone == "+447000000000"
     assert session.terms_accepted is True
     assert session.terms_accepted_at >= before_submit
     assert session.marketing_consent is False
@@ -113,6 +111,7 @@ def test_marketing_consent_is_optional_but_timestamped_when_checked(client):
         data={
             "full_name": "Grace Hopper",
             "email": "grace@example.com",
+            "confirm_email": "grace@example.com",
             "room_number": "803",
             "terms_accepted": "on",
             "marketing_consent": "on",
@@ -137,6 +136,7 @@ def test_terms_acceptance_is_required_for_internet_access(client):
         data={
             "full_name": "No Terms",
             "email": "noterms@example.com",
+            "confirm_email": "noterms@example.com",
             "room_number": "101",
             "marketing_consent": "on",
             "clientMac": "AA:BB:CC:DD:EE:02",
@@ -159,6 +159,7 @@ def test_missing_omada_session_parameters_are_rejected(client):
         data={
             "full_name": "Minimal Guest",
             "email": "minimal@example.com",
+            "confirm_email": "minimal@example.com",
             "room_number": "12",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:03",
@@ -242,6 +243,7 @@ def test_portal_submit_uses_origin_url_when_redirect_url_is_missing(client, sett
         data={
             "full_name": "Origin Guest",
             "email": "origin@example.com",
+            "confirm_email": "origin@example.com",
             "room_number": "42",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:06",
@@ -259,6 +261,104 @@ def test_portal_submit_uses_origin_url_when_redirect_url_is_missing(client, sett
         GuestWifiSession.objects.get().redirect_url
         == "https://example.com/original"
     )
+
+
+@pytest.mark.django_db
+def test_email_confirmation_must_match(client):
+    response = client.post(
+        "/portal/submit/",
+        data={
+            "full_name": "Mismatch Guest",
+            "email": "guest@example.com",
+            "confirm_email": "wrong@example.com",
+            "room_number": "42",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:07",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
+
+    assert response.status_code == 200
+    assert GuestWifiSession.objects.count() == 0
+    assert "Email addresses must match." in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_invalid_email_address_is_rejected(client):
+    response = client.post(
+        "/portal/submit/",
+        data={
+            "full_name": "Invalid Email Guest",
+            "email": "not-an-email",
+            "confirm_email": "not-an-email",
+            "room_number": "42",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:12",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
+
+    assert response.status_code == 200
+    assert GuestWifiSession.objects.count() == 0
+    assert "Enter a valid email address." in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_phone_requires_digits_and_country_code_prefix(client):
+    response = client.post(
+        "/portal/submit/",
+        data={
+            "full_name": "Phone Guest",
+            "email": "phone@example.com",
+            "confirm_email": "phone@example.com",
+            "room_number": "42",
+            "phone_country_code": "+44",
+            "phone": "abc123",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:08",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
+
+    assert response.status_code == 200
+    assert GuestWifiSession.objects.count() == 0
+    assert (
+        "Enter a local phone number using digits, spaces, or hyphens only."
+        in response.content.decode()
+    )
+
+
+@pytest.mark.django_db
+def test_phone_requires_country_code_when_number_is_entered(client):
+    response = client.post(
+        "/portal/submit/",
+        data={
+            "full_name": "Phone Prefix Guest",
+            "email": "prefix@example.com",
+            "confirm_email": "prefix@example.com",
+            "room_number": "42",
+            "phone": "7000000000",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:09",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
+
+    assert response.status_code == 200
+    assert GuestWifiSession.objects.count() == 0
+    assert "Choose a country code." in response.content.decode()
 
 
 def test_guest_wifi_session_is_registered_in_admin():

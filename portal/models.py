@@ -1,7 +1,21 @@
 import uuid
 
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
+
+DEFAULT_PORTAL_BRAND_NAME = "Kingfield Hotel"
+DEFAULT_PORTAL_TAGLINE = "Guest Wi-Fi"
+DEFAULT_PORTAL_LOGO_URL = ""
+DEFAULT_PORTAL_BACKGROUND_URL = ""
+DEFAULT_PORTAL_PRIMARY_COLOR = "#0b6b61"
+DEFAULT_PORTAL_SUPPORT_TEXT = "Need help? Please contact reception."
+DEFAULT_PORTAL_SUCCESS_MESSAGE = "You are connected. You can now continue browsing."
+
+validate_portal_primary_color = RegexValidator(
+    regex=r"^#[0-9a-fA-F]{6}$",
+    message="Enter a valid hex colour like #0b6b61.",
+)
 
 
 def default_auth_duration_minutes():
@@ -74,31 +88,31 @@ class GuestWifiSession(models.Model):
 
 
 def default_portal_brand_name():
-    return settings.PORTAL_BRAND_NAME
+    return DEFAULT_PORTAL_BRAND_NAME
 
 
 def default_portal_tagline():
-    return settings.PORTAL_TAGLINE
+    return DEFAULT_PORTAL_TAGLINE
 
 
 def default_portal_logo_url():
-    return settings.PORTAL_LOGO_URL
+    return DEFAULT_PORTAL_LOGO_URL
 
 
 def default_portal_background_url():
-    return settings.PORTAL_BACKGROUND_URL
+    return DEFAULT_PORTAL_BACKGROUND_URL
 
 
 def default_portal_primary_color():
-    return settings.PORTAL_PRIMARY_COLOR
+    return DEFAULT_PORTAL_PRIMARY_COLOR
 
 
 def default_portal_support_text():
-    return settings.PORTAL_SUPPORT_TEXT
+    return DEFAULT_PORTAL_SUPPORT_TEXT
 
 
 def default_portal_success_message():
-    return settings.PORTAL_SUCCESS_MESSAGE
+    return DEFAULT_PORTAL_SUCCESS_MESSAGE
 
 
 class PortalCustomization(models.Model):
@@ -131,6 +145,7 @@ class PortalCustomization(models.Model):
         max_length=32,
         default=default_portal_primary_color,
         help_text="CSS colour used for primary buttons and brand accents.",
+        validators=[validate_portal_primary_color],
     )
     support_text = models.TextField(
         blank=True,

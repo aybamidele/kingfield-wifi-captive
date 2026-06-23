@@ -1,9 +1,8 @@
 import logging
 
+import pytest
 from django.core.cache import cache
 from django.test import override_settings
-
-import pytest
 
 from portal.services.omada import get_success_redirect_url
 
@@ -80,6 +79,7 @@ def test_form_submission_logs_request_id(client, caplog, monkeypatch, settings):
         data={
             "full_name": "Logged Guest",
             "email": "logged@example.com",
+            "confirm_email": "logged@example.com",
             "room_number": "101",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:10",
@@ -121,6 +121,7 @@ def test_portal_submit_rate_limiter_returns_friendly_error(
     data = {
         "full_name": "Rate Limited Guest",
         "email": "rate@example.com",
+        "confirm_email": "rate@example.com",
         "room_number": "102",
         "terms_accepted": "on",
         "clientMac": "AA:BB:CC:DD:EE:11",

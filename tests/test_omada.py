@@ -1,7 +1,5 @@
-from django.utils import timezone
-
 import pytest
-import requests
+from django.utils import timezone
 
 from portal.models import GuestWifiSession
 from portal.services.omada import (
@@ -229,15 +227,16 @@ def test_form_submit_with_omada_disabled_keeps_session_pending(client, settings)
         data={
             "full_name": "Local Guest",
             "email": "local@example.com",
-                "room_number": "101",
-                "terms_accepted": "on",
-                "clientMac": "AA:BB:CC:DD:EE:01",
-                "apMac": "11:22:33:44:55:66",
-                "ssidName": "Kingfield Guest",
-                "radioId": "1",
-                "site": "site-id",
-            },
-        )
+            "confirm_email": "local@example.com",
+            "room_number": "101",
+            "terms_accepted": "on",
+            "clientMac": "AA:BB:CC:DD:EE:01",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
 
     assert response.status_code == 302
     assert response["Location"] == "/success/"
@@ -268,16 +267,17 @@ def test_form_submit_with_successful_omada_uses_safe_redirect(
         data={
             "full_name": "Redirect Guest",
             "email": "redirect@example.com",
+            "confirm_email": "redirect@example.com",
             "room_number": "202",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:02",
-                "apMac": "11:22:33:44:55:66",
-                "ssidName": "Kingfield Guest",
-                "radioId": "1",
-                "site": "site-id",
-                "redirectUrl": "https://guest.example.com/welcome",
-            },
-        )
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+            "redirectUrl": "https://guest.example.com/welcome",
+        },
+    )
 
     assert response.status_code == 302
     assert response["Location"] == "https://guest.example.com/welcome"
@@ -304,15 +304,16 @@ def test_form_submit_with_failed_omada_shows_friendly_error(
         data={
             "full_name": "Failed Guest",
             "email": "failed@example.com",
+            "confirm_email": "failed@example.com",
             "room_number": "303",
             "terms_accepted": "on",
             "clientMac": "AA:BB:CC:DD:EE:03",
-                "apMac": "11:22:33:44:55:66",
-                "ssidName": "Kingfield Guest",
-                "radioId": "1",
-                "site": "site-id",
-            },
-        )
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
 
     content = response.content.decode()
     assert response.status_code == 200

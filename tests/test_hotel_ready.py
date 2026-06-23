@@ -2,16 +2,21 @@ import csv
 from datetime import timedelta
 from io import StringIO
 
+import pytest
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-import pytest
-
 from portal.admin import GuestWifiSessionAdmin
-from portal.models import GuestWifiSession, PortalCustomization
+from portal.models import (
+    DEFAULT_PORTAL_BRAND_NAME,
+    DEFAULT_PORTAL_PRIMARY_COLOR,
+    GuestWifiSession,
+    PortalCustomization,
+)
 
 
 def make_session(**overrides):
@@ -30,6 +35,14 @@ def make_session(**overrides):
     }
     defaults.update(overrides)
     return GuestWifiSession.objects.create(**defaults)
+
+
+def update_portal_customization(**overrides):
+    customization = PortalCustomization.objects.get()
+    for field, value in overrides.items():
+        setattr(customization, field, value)
+    customization.save()
+    return customization
 
 
 @pytest.mark.django_db
@@ -130,7 +143,6 @@ def test_purge_old_sessions_deletes_records_older_than_days():
 
 @pytest.mark.django_db
 def test_privacy_and_terms_pages_include_hotel_ready_content(client, settings):
-    settings.PORTAL_BRAND_NAME = "Kingfield Hotel"
     settings.DATA_RETENTION_DAYS = 365
 
     privacy = client.get("/privacy/").content.decode()
@@ -147,10 +159,12 @@ def test_privacy_and_terms_pages_include_hotel_ready_content(client, settings):
 
 @pytest.mark.django_db
 def test_portal_uses_branding_context_and_hotel_copy(client, settings):
-    settings.PORTAL_BRAND_NAME = "Kingfield Hotel"
-    settings.PORTAL_TAGLINE = "Fast guest Wi-Fi"
-    settings.PORTAL_PRIMARY_COLOR = "#123456"
-    settings.PORTAL_SUPPORT_TEXT = "Need help? Contact reception."
+    update_portal_customization(
+        brand_name="Kingfield Hotel",
+        tagline="Fast guest Wi-Fi",
+        primary_color="#123456",
+        support_text="Need help? Contact reception.",
+    )
 
     response = client.get(
         "/portal/",
@@ -169,14 +183,17 @@ def test_portal_uses_branding_context_and_hotel_copy(client, settings):
     assert "--color-primary: #123456" in content
     assert "Please complete the short form below to access the guest Wi-Fi." in content
     assert "I agree to the Wi-Fi terms of use." in content
-    assert "I would like to receive offers and updates from Kingfield Hotel by email." in content
+    assert (
+        "I would like to receive offers and updates from Kingfield Hotel by email."
+        in content
+    )
     assert "Connect to Wi-Fi" in content
     assert "Need help? Contact reception." in content
 
 
 @pytest.mark.django_db
-def test_success_page_uses_configured_message(client, settings):
-    settings.PORTAL_SUCCESS_MESSAGE = "You are online. Enjoy your stay."
+def test_success_page_uses_admin_configured_message(client):
+    update_portal_customization(success_message="You are online. Enjoy your stay.")
 
     response = client.get("/success/")
 
@@ -184,7 +201,7 @@ def test_success_page_uses_configured_message(client, settings):
 
 
 @pytest.mark.django_db
-def test_admin_portal_customization_overrides_env_branding(client, settings):
+def test_portal_customization_is_admin_managed_not_env_managed(client, settings):
     settings.PORTAL_BRAND_NAME = "Env Hotel"
     settings.PORTAL_TAGLINE = "Env Wi-Fi"
     settings.PORTAL_LOGO_URL = "/static/env-logo.svg"
@@ -192,7 +209,7 @@ def test_admin_portal_customization_overrides_env_branding(client, settings):
     settings.PORTAL_PRIMARY_COLOR = "#111111"
     settings.PORTAL_SUPPORT_TEXT = "Env support."
     settings.PORTAL_SUCCESS_MESSAGE = "Env success."
-    PortalCustomization.objects.create(
+    update_portal_customization(
         brand_name="Admin Hotel",
         tagline="Admin Wi-Fi",
         logo_url="/static/admin-logo.svg",
@@ -225,9 +242,61 @@ def test_admin_portal_customization_overrides_env_branding(client, settings):
     assert "Admin success." in success_response.content.decode()
 
 
+@pytest.mark.django_db
+def test_portal_customization_defaults_are_code_managed_not_env_managed(settings):
+    settings.PORTAL_BRAND_NAME = "Env Hotel"
+    settings.PORTAL_PRIMARY_COLOR = "#111111"
+
+    customization = PortalCustomization()
+
+    assert customization.brand_name == DEFAULT_PORTAL_BRAND_NAME
+    assert customization.primary_color == DEFAULT_PORTAL_PRIMARY_COLOR
+
+
+@pytest.mark.django_db
+def test_branding_context_uses_code_defaults_when_admin_row_is_missing(
+    client,
+    settings,
+):
+    PortalCustomization.objects.all().delete()
+    settings.PORTAL_BRAND_NAME = "Env Hotel"
+    settings.PORTAL_PRIMARY_COLOR = "#111111"
+
+    response = client.get(
+        "/portal/",
+        {
+            "clientMac": "AA:BB:CC:DD:EE:03",
+            "apMac": "11:22:33:44:55:66",
+            "ssidName": "Kingfield Guest",
+            "radioId": "1",
+            "site": "site-id",
+        },
+    )
+    content = response.content.decode()
+
+    assert f"Welcome to {DEFAULT_PORTAL_BRAND_NAME} Wi-Fi" in content
+    assert f"--color-primary: {DEFAULT_PORTAL_PRIMARY_COLOR}" in content
+    assert "Env Hotel" not in content
+
+
+@pytest.mark.parametrize("primary_color", ["", "not-a-colour", "#12345g"])
+def test_portal_customization_rejects_blank_or_invalid_primary_color(primary_color):
+    customization = PortalCustomization(primary_color=primary_color)
+
+    with pytest.raises(ValidationError):
+        customization.full_clean(validate_unique=False)
+
+
 def test_production_settings_smoke(settings):
     assert settings.SECURE_PROXY_SSL_HEADER == ("HTTP_X_FORWARDED_PROTO", "https")
     assert "whitenoise.middleware.WhiteNoiseMiddleware" in settings.MIDDLEWARE
     assert settings.STATIC_ROOT.name == "staticfiles"
     assert hasattr(settings, "CSRF_TRUSTED_ORIGINS")
     assert hasattr(settings, "ALLOWED_HOSTS")
+    assert not hasattr(settings, "PORTAL_BRAND_NAME")
+    assert not hasattr(settings, "PORTAL_TAGLINE")
+    assert not hasattr(settings, "PORTAL_LOGO_URL")
+    assert not hasattr(settings, "PORTAL_BACKGROUND_URL")
+    assert not hasattr(settings, "PORTAL_PRIMARY_COLOR")
+    assert not hasattr(settings, "PORTAL_SUPPORT_TEXT")
+    assert not hasattr(settings, "PORTAL_SUCCESS_MESSAGE")

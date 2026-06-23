@@ -59,14 +59,7 @@ uv run inv gunicorn
 | `CSRF_TRUSTED_ORIGINS` | production HTTPS | Comma-separated trusted origins, including scheme. |
 | `DATABASE_URL` | production | PostgreSQL URL. If unset, local SQLite is used. |
 | `DATA_RETENTION_DAYS` | no | Guest Wi-Fi session retention period. Defaults to `365`. |
-| `PORTAL_BRAND_NAME` | no | Defaults to `Kingfield Hotel`. |
-| `PORTAL_TAGLINE` | no | Short text shown above the brand name. |
-| `PORTAL_LOGO_URL` | no | Prefer local/static URLs because unauthenticated guests may not have internet access. |
-| `PORTAL_BACKGROUND_URL` | no | Prefer local/static URLs for captive portal reliability. |
 | `PORTAL_ALLOWED_REDIRECT_HOSTS` | no | Extra comma-separated hosts allowed for Omada `redirectUrl`. |
-| `PORTAL_PRIMARY_COLOR` | no | Primary button and brand colour. Defaults to `#0b6b61`. |
-| `PORTAL_SUPPORT_TEXT` | no | Help text shown below portal cards. |
-| `PORTAL_SUCCESS_MESSAGE` | no | Success page body copy. |
 | `PORTAL_RATE_LIMIT_ENABLED` | no | Enables cache-based submit rate limiting. Defaults to `True`. |
 | `PORTAL_RATE_LIMIT_ATTEMPTS` | no | Submit attempts per IP per window. Defaults to `20`. |
 | `PORTAL_RATE_LIMIT_WINDOW_SECONDS` | no | Submit rate-limit window. Defaults to `60`. |
@@ -89,9 +82,9 @@ uv run inv gunicorn
 ## Portal UI customization
 
 Edit portal branding and copy in Django admin under **Portal customization**.
-Create one customization record; its values override the `PORTAL_*` environment
-variables used by the public portal. If no customization record exists, the app
-continues to use `.env` values as bootstrap defaults.
+The migration creates the singleton customization record with code defaults.
+After that, branding and public portal copy are managed only through Django
+admin, not through `.env`.
 
 See `docs/google-sheets-integration.md` for setup and retry instructions.
 See `docs/dokploy-deployment.md`, `docs/omada-setup.md`, and
@@ -135,7 +128,6 @@ DEBUG=false
 ALLOWED_HOSTS=<your-domain>
 CSRF_TRUSTED_ORIGINS=https://<your-domain>
 DATABASE_URL=<dokploy-postgres-url>
-PORTAL_BRAND_NAME=Kingfield Hotel Wi-Fi
 DEFAULT_AUTH_MINUTES=1440
 ```
 

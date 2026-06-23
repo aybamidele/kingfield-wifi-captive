@@ -28,12 +28,7 @@ ALLOWED_HOSTS=wifi.hotel-domain.co.uk
 CSRF_TRUSTED_ORIGINS=https://wifi.hotel-domain.co.uk
 DATABASE_URL=<dokploy-postgres-url>
 DATA_RETENTION_DAYS=365
-PORTAL_BRAND_NAME=Kingfield Hotel
-PORTAL_TAGLINE=Guest Wi-Fi
 PORTAL_ALLOWED_REDIRECT_HOSTS=
-PORTAL_PRIMARY_COLOR=#0b6b61
-PORTAL_SUPPORT_TEXT=Need help? Please contact reception.
-PORTAL_SUCCESS_MESSAGE=You are connected. You can now continue browsing.
 PORTAL_RATE_LIMIT_ENABLED=True
 PORTAL_RATE_LIMIT_ATTEMPTS=20
 PORTAL_RATE_LIMIT_WINDOW_SECONDS=60
@@ -53,6 +48,10 @@ GOOGLE_SHEETS_ENABLED=False
 
 Use a dedicated Omada Hotspot Operator account. Do not use the main Omada
 controller admin account.
+
+Portal branding and public portal copy are managed in Django admin under
+**Portal customization**. The migration creates the singleton record with code
+defaults; do not set branding or portal-copy values in `.env`.
 
 ## 4. Set domain and HTTPS
 
@@ -77,6 +76,10 @@ Run a one-off command from Dokploy:
 ```bash
 python manage.py createsuperuser
 ```
+
+Then sign in to `/admin/`, open **Portal customization**, and set the hotel
+brand name, tagline, logo/background URLs, primary colour, support text, and
+success message.
 
 ## 7. Smoke test
 
