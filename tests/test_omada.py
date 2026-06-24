@@ -135,7 +135,7 @@ def test_eap_payload_construction(omada_settings):
         "ssidName": "Kingfield Guest",
         "radioId": "1",
         "site": "main-site",
-        "time": 90,
+        "time": 5_400_000,
         "authType": 4,
     }
 
@@ -154,7 +154,7 @@ def test_gateway_payload_construction(omada_settings):
         "gatewayMac": "22:33:44:55:66:77",
         "vid": "42",
         "site": "default-site",
-        "time": 90,
+        "time": 5_400_000,
         "authType": 4,
     }
 

@@ -214,11 +214,8 @@ def build_authorization_payload(session: GuestWifiSession) -> dict:
 
 
 def omada_authorization_time() -> int:
-    # Omada controller versions differ in how hotspot duration is documented.
-    # The current payload keeps DEFAULT_AUTH_MINUTES as minutes, matching the
-    # value captured by the app. Keep this isolated for adjustment after live
-    # testing against the target controller firmware.
-    return settings.DEFAULT_AUTH_MINUTES
+    # Omada's hotspot API expects the authorization duration in milliseconds.
+    return settings.DEFAULT_AUTH_MINUTES * 60 * 1000
 
 
 def get_success_redirect_url(omada_redirect_url: str | None = None) -> str:
